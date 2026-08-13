@@ -13,37 +13,38 @@
     <meta name="theme-color" content="#007aff">
 
     <style>
-        /* 極致壓縮 margin / padding，文字進一步放大 */
-        body { font-family: sans-serif; font-size: 15px; margin: 0; padding: 2px; background: #fff; }
+        /* 極致壓縮邊距與行高，確保一版睇晒 */
+        body { font-family: sans-serif; font-size: 13px; margin: 0; padding: 1px; background: #fff; }
         
-        .top-bar { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; overflow-x: auto; }
-        .date-bar { display: flex; gap: 4px; }
+        .top-bar { display: flex; gap: 3px; margin-bottom: 2px; align-items: center; }
+        .date-bar { display: flex; gap: 3px; overflow-x: auto; }
         
-        .date-btn { padding: 4px 8px; background: #007aff; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-size: 15px; font-weight: bold; }
+        .date-btn { padding: 3px 6px; background: #007aff; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: bold; }
         .date-btn.active { background: #ff3b30; }
         
-        .refresh-btn { padding: 4px 8px; background: #34c759; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 15px; }
+        .refresh-btn { padding: 3px 6px; background: #34c759; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 13px; }
         
-        .batch-bar { margin-bottom: 4px; background: #f0f0f5; padding: 3px 6px; border: 1px solid #ccc; display: inline-block; border-radius: 3px; }
-        .batch-bar button { font-size: 14px; padding: 2px 6px; cursor: pointer; font-weight: bold; }
+        .batch-bar { margin-bottom: 2px; background: #f0f0f5; padding: 2px 4px; border: 1px solid #ccc; display: inline-block; border-radius: 3px; }
+        .batch-bar button { font-size: 12px; padding: 1px 4px; cursor: pointer; font-weight: bold; }
         
-        .table-container { overflow-x: auto; max-height: 80vh; }
+        /* 移除外層 container 的 overflow-x 強制逼入一頁 */
+        .table-container { width: 100%; overflow: hidden; }
         
-        /* 表格與格仔設計：強行縮窄時段寬度，放大字體 */
+        /* 強制表格平分空間，縮小每小時欄寬 */
         table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-        th, td { border: 1px solid #ccc; padding: 2px 1px; text-align: center; overflow: hidden; }
+        th, td { border: 1px solid #ccc; padding: 1px 0px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        /* 表頭時段 (7-22) 欄位縮窄，字體放大 */
-        th { background: #e5e5ea; position: sticky; top: 0; z-index: 2; font-size: 14px; width: 22px; }
+        /* 時段欄位 (7-22 共16欄) 自動均分剩餘空間，極度縮窄 */
+        th { background: #e5e5ea; position: sticky; top: 0; z-index: 2; font-size: 11px; }
         
-        /* 場館名稱欄位維持適當寬度以容納文字 */
-        .venue-col { text-align: left; padding-left: 4px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; white-space: nowrap; font-size: 15px; width: 110px; }
+        /* 場館名稱欄位佔適當比例 */
+        .venue-col { text-align: left; padding-left: 2px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; font-size: 12px; width: 28%; }
+        .venue-col label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
         
-        /* 可訂場數：數字加粗加大 (17px) */
-        .has-court { background: #34c759; color: white; font-weight: bold; font-size: 17px; }
+        /* 可訂場數：數字加粗加大 */
+        .has-court { background: #34c759; color: white; font-weight: bold; font-size: 14px; }
         
-        /* 一般吉場或空格文字 */
-        .court-cell { font-size: 14px; }
+        .court-cell { font-size: 12px; }
     </style>
 </head>
 <body>
@@ -112,7 +113,7 @@
             sortedNames.forEach(name => {
                 html += `<tr data-venue="${name}">
                     <td class="venue-col">
-                        <label style="cursor:pointer; display:block; overflow:hidden; text-overflow:ellipsis;">
+                        <label>
                             <input type="checkbox" name="vCb" value="${name}" checked onchange="filterRows()"> 
                             ${name}
                         </label>
