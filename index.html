@@ -13,37 +13,42 @@
     <meta name="theme-color" content="#007aff">
 
     <style>
-        /* 整體字體放大（從 12px 改為 14px） */
-        body { font-family: sans-serif; font-size: 14px; margin: 0; padding: 6px; background: #fff; }
+        /* 極致壓縮 margin / padding，文字進一步放大 */
+        body { font-family: sans-serif; font-size: 15px; margin: 0; padding: 2px; background: #fff; }
         
-        .top-bar { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; overflow-x: auto; }
-        .date-bar { display: flex; gap: 6px; }
+        .top-bar { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; overflow-x: auto; }
+        .date-bar { display: flex; gap: 4px; }
         
-        /* 日期按鈕字體放大 */
-        .date-btn { padding: 6px 12px; background: #007aff; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px; }
+        .date-btn { padding: 4px 8px; background: #007aff; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-size: 15px; font-weight: bold; }
         .date-btn.active { background: #ff3b30; }
         
-        /* 重新整理按鈕字體放大 */
-        .refresh-btn { padding: 6px 12px; background: #34c759; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 14px; }
+        .refresh-btn { padding: 4px 8px; background: #34c759; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 15px; }
         
-        .batch-bar { margin-bottom: 8px; background: #f0f0f5; padding: 6px 10px; border: 1px solid #ccc; display: inline-block; border-radius: 4px; }
-        .batch-bar button { font-size: 13px; padding: 3px 8px; cursor: pointer; }
+        .batch-bar { margin-bottom: 4px; background: #f0f0f5; padding: 3px 6px; border: 1px solid #ccc; display: inline-block; border-radius: 3px; }
+        .batch-bar button { font-size: 14px; padding: 2px 6px; cursor: pointer; font-weight: bold; }
         
-        .table-container { overflow-x: auto; max-height: 75vh; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
-        th { background: #e5e5ea; position: sticky; top: 0; z-index: 2; font-size: 14px; }
+        .table-container { overflow-x: auto; max-height: 80vh; }
         
-        /* 場館名稱欄位字體放大 */
-        .venue-col { text-align: left; padding-left: 8px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; white-space: nowrap; font-size: 14px; }
+        /* 表格與格仔設計：強行縮窄時段寬度，放大字體 */
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        th, td { border: 1px solid #ccc; padding: 2px 1px; text-align: center; overflow: hidden; }
         
-        /* 可訂場數：數字改大並加粗 (16px) */
-        .has-court { background: #34c759; color: white; font-weight: bold; font-size: 16px; }
+        /* 表頭時段 (7-22) 欄位縮窄，字體放大 */
+        th { background: #e5e5ea; position: sticky; top: 0; z-index: 2; font-size: 14px; width: 22px; }
+        
+        /* 場館名稱欄位維持適當寬度以容納文字 */
+        .venue-col { text-align: left; padding-left: 4px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; white-space: nowrap; font-size: 15px; width: 110px; }
+        
+        /* 可訂場數：數字加粗加大 (17px) */
+        .has-court { background: #34c759; color: white; font-weight: bold; font-size: 17px; }
+        
+        /* 一般吉場或空格文字 */
+        .court-cell { font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="top-bar">
-        <button class="refresh-btn" onclick="refreshData()">🔄 重新整理</button>
+        <button class="refresh-btn" onclick="refreshData()">🔄 更新</button>
         <div class="date-bar" id="dateBar"></div>
     </div>
 
@@ -87,7 +92,7 @@
                 const dateBar = document.getElementById('dateBar');
                 dateBar.innerHTML = '';
                 dates.forEach(d => {
-                    dateBar.innerHTML += `<button class="date-btn ${d===currentDate?'active':''}" onclick="changeDate('${d}')">${d}</button>`;
+                    dateBar.innerHTML += `<button class="date-btn ${d===currentDate?'active':''}" onclick="changeDate('${d}')">${d.slice(5)}</button>`;
                 });
                 
                 buildTableStructure();
@@ -98,17 +103,16 @@
 
         function buildTableStructure() {
             const table = document.getElementById('matrixTable');
-            let html = `<thead><tr><th class="venue-col" style="z-index: 3; background: #e5e5ea;">場館名稱</th>`;
+            let html = `<thead><tr><th class="venue-col" style="z-index: 3; background: #e5e5ea;">場館</th>`;
             for (let i = 7; i <= 22; i++) {
                 html += `<th>${i}</th>`;
             }
             html += `</tr></thead><tbody id="tableBody">`;
             
             sortedNames.forEach(name => {
-                // 已移除區名顯示，只保留純場館名稱
                 html += `<tr data-venue="${name}">
                     <td class="venue-col">
-                        <label style="cursor:pointer;">
+                        <label style="cursor:pointer; display:block; overflow:hidden; text-overflow:ellipsis;">
                             <input type="checkbox" name="vCb" value="${name}" checked onchange="filterRows()"> 
                             ${name}
                         </label>
@@ -143,7 +147,7 @@
         function changeDate(d) {
             currentDate = d;
             document.querySelectorAll('.date-btn').forEach(btn => {
-                btn.className = btn.innerText === d ? 'date-btn active' : 'date-btn';
+                btn.className = btn.innerText === d.slice(5) ? 'date-btn active' : 'date-btn';
             });
             updateTableData();
         }
