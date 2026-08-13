@@ -2,8 +2,16 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Book場啦你</title>
+    
+    <!-- PWA 專用設定 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Book場啦你">
+    <meta name="theme-color" content="#007aff">
+
     <style>
         body { font-family: sans-serif; font-size: 12px; margin: 0; padding: 5px; background: #fff; }
         .top-bar { display: flex; gap: 4px; margin-bottom: 5px; align-items: center; overflow-x: auto; }
@@ -55,7 +63,6 @@
                     }
                 });
 
-                // 沙田區第一，離島區最後，其餘按區名排序
                 sortedNames = Array.from(venueMap.keys()).sort((a, b) => {
                     const distA = venueMap.get(a), distB = venueMap.get(b);
                     if (distA === '沙田區' && distB !== '沙田區') return -1;
@@ -119,7 +126,6 @@
                     const count = rec ? parseInt(rec.Available_Courts) : 0;
                     
                     cell.innerText = count > 0 ? count : '';
-                    // 修正：確實加上有場地時嘅綠色 class
                     cell.className = count > 0 ? 'court-cell has-court' : 'court-cell';
                 });
             });
@@ -148,6 +154,13 @@
 
         function refreshData() {
             location.reload(true);
+        }
+
+        // 註冊 Service Worker 實現完整 PWA 安裝支援
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed: ', err));
+            });
         }
 
         init();
