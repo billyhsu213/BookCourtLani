@@ -13,23 +13,32 @@
     <meta name="theme-color" content="#007aff">
 
     <style>
-        body { font-family: sans-serif; font-size: 12px; margin: 0; padding: 5px; background: #fff; }
-        .top-bar { display: flex; gap: 4px; margin-bottom: 5px; align-items: center; overflow-x: auto; }
-        .date-bar { display: flex; gap: 4px; }
-        .date-btn { padding: 5px 10px; background: #007aff; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; }
-        .date-btn.active { background: #ff3b30; }
-        .refresh-btn { padding: 5px 10px; background: #34c759; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-weight: bold; }
+        /* 整體字體放大（從 12px 改為 14px） */
+        body { font-family: sans-serif; font-size: 14px; margin: 0; padding: 6px; background: #fff; }
         
-        .batch-bar { margin-bottom: 5px; background: #f0f0f5; padding: 4px 8px; border: 1px solid #ccc; display: inline-block; border-radius: 4px; }
+        .top-bar { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; overflow-x: auto; }
+        .date-bar { display: flex; gap: 6px; }
+        
+        /* 日期按鈕字體放大 */
+        .date-btn { padding: 6px 12px; background: #007aff; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px; }
+        .date-btn.active { background: #ff3b30; }
+        
+        /* 重新整理按鈕字體放大 */
+        .refresh-btn { padding: 6px 12px; background: #34c759; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 14px; }
+        
+        .batch-bar { margin-bottom: 8px; background: #f0f0f5; padding: 6px 10px; border: 1px solid #ccc; display: inline-block; border-radius: 4px; }
+        .batch-bar button { font-size: 13px; padding: 3px 8px; cursor: pointer; }
         
         .table-container { overflow-x: auto; max-height: 75vh; }
         table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 3px; text-align: center; }
-        th { background: #e5e5ea; position: sticky; top: 0; z-index: 2; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+        th { background: #e5e5ea; position: sticky; top: 0; z-index: 2; font-size: 14px; }
         
-        .venue-col { text-align: left; padding-left: 6px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; white-space: nowrap; }
+        /* 場館名稱欄位字體放大 */
+        .venue-col { text-align: left; padding-left: 8px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; white-space: nowrap; font-size: 14px; }
         
-        .has-court { background: #34c759; color: white; font-weight: bold; }
+        /* 可訂場數：數字改大並加粗 (16px) */
+        .has-court { background: #34c759; color: white; font-weight: bold; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -40,8 +49,8 @@
 
     <div class="batch-bar">
         場館篩選：
-        <button onclick="toggleAll(true)" style="font-size:11px; padding:2px 6px; cursor:pointer;">全選</button>
-        <button onclick="toggleAll(false)" style="font-size:11px; padding:2px 6px; cursor:pointer;">全不選</button>
+        <button onclick="toggleAll(true)">全選</button>
+        <button onclick="toggleAll(false)">全不選</button>
     </div>
 
     <div class="table-container">
@@ -96,12 +105,12 @@
             html += `</tr></thead><tbody id="tableBody">`;
             
             sortedNames.forEach(name => {
-                const district = venueMap.get(name);
+                // 已移除區名顯示，只保留純場館名稱
                 html += `<tr data-venue="${name}">
                     <td class="venue-col">
                         <label style="cursor:pointer;">
                             <input type="checkbox" name="vCb" value="${name}" checked onchange="filterRows()"> 
-                            [${district}] ${name}
+                            ${name}
                         </label>
                     </td>`;
                 
@@ -156,7 +165,6 @@
             location.reload(true);
         }
 
-        // 註冊 Service Worker 實現完整 PWA 安裝支援
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed: ', err));
