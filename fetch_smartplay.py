@@ -5,30 +5,27 @@ import time
 
 def fetch_data():
     os.makedirs("data", exist_ok=True)
-    
-    # 這裡只示範沙田區 (ST) 作為測試
-    # 之後你可以再加其他地區代碼落去個 list 度
     dist_code = "ST" 
     
     with sync_playwright() as p:
-        # 開啟一個隱形瀏覽器
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
-        # 直接進入 SmartPLAY 查場頁面
-        url = "https://www.smartplay.lcsd.gov.hk/facilities/search"
-        page.goto(url, wait_until="networkidle")
+        # 直接去 API 網址（用瀏覽器開，帶齊晒瀏覽器特徵同 Cookie）
+        url = f"https://www.smartplay.lcsd.gov.hk/rest/facility-catalog/api/v1/publ/facilities?distCode={dist_code}&faCode=BADC&playDate=2026-08-15"
         
-        # 這裡會模擬真人操作：等個網頁載入完，抓取網頁內容
-        # 其實 SmartPLAY 的數據通常藏在網頁的 JSON 響應中
-        # 這裡我們監聽網頁發出的請求並攔截數據
+        print(f"Navigating to {url}")
+        page.goto(url, wait_until="domcontentloaded")
         
-        with page.expect_response("**/api/v1/publ/facilities?*") as response_info:
-            # 這裡可以觸發查詢，不過直接進入頁面通常會自動載入
-            time.sleep(5) # 等候一下讓內容載入
-            
-        response = response_info.value
-        data = response.json()
+        # 直接拎個網頁入面嘅文字（因為瀏覽器直接開 API 網址，入面全部都係 JSON 文字）
+        content = page.inner_text("body")
+        
+        try:
+            data = json.loads(content)
+        except Exception as e:
+            print(f"Failed to parse JSON: {e}")
+            print(f"Raw content: {content[:200]}")
+            return
         
         # 儲存檔案
         file_path = f"data/today_{dist_code}.json"
