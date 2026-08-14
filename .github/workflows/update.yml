@@ -1,0 +1,32 @@
+name: Auto Update Badminton Data
+
+on:
+  schedule:
+    # 呢度設定為每小時自動執行一次（你可以按需要改頻率）
+    - cron: '0 * * * *'
+  workflow_dispatch: # 容許你隨時手動喺 GitHub 按掣即時更新
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch latest data from LCSD Smartplay
+        run: |
+          curl -s "https://data.smartplay.lcsd.gov.hk/rest/cms/api/v1/publ/contents/open-data/badminton/file" -o data.json
+
+      - name: Check if data changed
+        id: git-check
+        run: |
+          git diff --quiet data.json || echo "has_changes=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if data changed
+        if: steps.git-check.outputs.has_changes == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.io"
+          git add data.json
+          git commit -m "Auto-update badminton data: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
