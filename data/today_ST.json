@@ -1,3 +1,6 @@
 {
-  "status": "click_failed_no_data"
+  "status": "urls_captured",
+  "urls": [
+    "no_api_called"
+  ]
 }
