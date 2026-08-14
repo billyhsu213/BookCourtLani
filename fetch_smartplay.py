@@ -9,34 +9,38 @@ def fetch_data():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
-        data_captured = []
-        def intercept_response(response):
-            if "/api/v1/publ/facilities" in response.url:
+        captured_data = []
+        
+        # 設置攔截網絡請求
+        def handle_response(response):
+            # 只要網頁背景有呼叫任何設施相關的 API，我們就把它整段抓下來
+            if "facility-catalog/api" in response.url or "facilities" in response.url:
                 try:
-                    data_captured.append(response.json())
+                    data = response.json()
+                    if data: # 確保不是空資料
+                        captured_data.append(data)
                 except:
                     pass
 
-        page.on("response", intercept_response)
+        page.on("response", handle_response)
         
+        # 直接去已選好沙田區的預設搜尋結果頁面（繞過首頁）
+        # 讓瀏覽器直接去載入這個帶有數據的頁面
         target_url = "https://www.smartplay.lcsd.gov.hk/facilities/search"
         print(f"正在前往: {target_url}")
-        page.goto(target_url, wait_until="networkidle")
         
-        page.wait_for_timeout(5000)
+        # 載入頁面並等待網絡靜止
+        page.goto(target_url, wait_until="networkidle", timeout=60000)
         
-        # 嘗試直接點擊畫面上的搜尋按鈕
-        try:
-            # 尋找有「搜尋」字眼的按鈕
-            page.locator("button:has-text('搜尋')").click(timeout=5000)
-            print("已點擊搜尋按鈕！")
-        except:
-            print("找不到指定按鈕，繼續等待...")
-            
-        page.wait_for_timeout(8000)
+        # 給予額外時間讓頁面完全渲染
+        page.wait_for_timeout(10000)
         
-        with open("data/today_ST.json", "w", encoding="utf-8") as f:
-            json.dump(data_captured, f, ensure_ascii=False, indent=2)
+        # 強制寫入檔案（就算captured_data係空，也會寫入{"status": "empty"}以便git知道有更新）
+        output_content = captured_data if captured_data else {"status": "no_data_captured"}
+        
+        file_path = "data/today_ST.json"
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(output_content, f, ensure_ascii=False, indent=2)
             
         browser.close()
         print("完成！")
