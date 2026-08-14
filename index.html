@@ -1,5 +1,32 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
+    <!-- 呢個係你想固定嘅紅圈範圍（頂部導航、按鈕、日期、表頭） -->
+<div class="sticky-header-container">
+    <!-- 頂部日期、更新掣等 -->
+    <div class="top-nav">...</div>
+    
+    <!-- 場館篩選掣 (全選/全不選) -->
+    <div class="filter-bar">...</div>
+
+    <!-- 表格開頭（包括 場館 同 7-22 數字） -->
+    <table class="badminton-table">
+        <thead>
+            <tr>
+                <th>場館</th>
+                <th>7</th><th>8</th><th>9</th><!-- ... 如此類推直到 22 --></tr>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+<!-- 呢個係下面識得碌動嘅場館內容區域 -->
+<div class="table-scroll-body">
+    <table class="badminton-table">
+        <tbody>
+            <!-- 呢度放你所有場館嘅 <tr> 內容 -->
+        </tbody>
+    </table>
+</div>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,12 +41,27 @@
 
     <style>
         /* 固定整個表格嘅頂部標題列（包括場館同 7-22 時間欄） */
-thead th {
+/* 1. 將紅圈範圍嘅最外層容器固定喺頂部 */
+.sticky-header-container {
     position: sticky;
     top: 0;
-    z-index: 50;
-    background-color: #ffffff; /* 必須設定背景色，否則碌動時會透明重疊 */
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1); /* 加少少陰影令固定後更有層次感 */
+    z-index: 100;
+    background-color: #ffffff; /* 必須有背景色，否則向下碌時下面嘅字會透上嚟 */
+}
+
+/* 2. 固定表格嘅表頭（場館同 7-22 嗰行）黏住個 container 底 */
+thead th {
+    position: sticky;
+    top: /* 根據你上面有幾多行工具列嘅高度去調整，例如 80px 或者跟隨 container */;
+    z-index: 90;
+    background-color: #ffffff;
+}
+
+/* 3. 下面識得上下滾動嘅區域（高度可自行調節，例如 70vh） */
+.table-scroll-body {
+    max-height: 70vh; 
+    overflow-y: auto;
+    position: relative;
 }
         /* 極致壓縮邊距與行高，確保一版睇晒 */
         body { font-family: sans-serif; font-size: 13px; margin: 0; padding: 1px; background: #fff; }
