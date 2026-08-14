@@ -2,7 +2,7 @@ name: Update SmartPLAY Data
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -19,9 +19,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests
+          pip install playwright requests
+          playwright install --with-deps chromium
 
-      - name: Run SmartPLAY API Scraper
+      - name: Run SmartPLAY Scraper
         run: |
           python fetch_smartplay.py
 
