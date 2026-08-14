@@ -137,9 +137,18 @@
                 const cells = row.querySelectorAll('.court-cell');
                 cells.forEach(cell => {
                     const t = cell.getAttribute('data-hour');
-                    const rec = rawData.find(r => r.Available_Date === currentDate && r.Venue_Name_TC.trim() === name && r.Session_Start_Time === t);
-                    const count = rec ? parseInt(rec.Available_Courts) : 0;
                     
+                    // 嚴格匹配日期、場館名稱及時段
+                    const rec = rawData.find(r => 
+                        r.Available_Date === currentDate && 
+                        r.Venue_Name_TC.trim() === name && 
+                        r.Session_Start_Time === t
+                    );
+                    
+                    // 確保安全轉換數字，非數字或小於等於0一律視為0
+                    const count = rec ? parseInt(rec.Available_Courts) || 0 : 0;
+                    
+                    // 只有大於0至會顯示數字同綠色，否則完全空白
                     cell.innerText = count > 0 ? count : '';
                     cell.className = count > 0 ? 'court-cell has-court' : 'court-cell';
                 });
