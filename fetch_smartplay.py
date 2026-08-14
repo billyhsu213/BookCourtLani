@@ -11,7 +11,7 @@ def fetch_data():
         
         captured_data = []
         def intercept_response(response):
-            if "facility-catalog/api" in response.url or "facilities" in response.url:
+            if "facilities" in response.url or "api/v1" in response.url:
                 try:
                     data = response.json()
                     if data:
@@ -21,23 +21,28 @@ def fetch_data():
 
         page.on("response", intercept_response)
         
-        # 1. 去查場主頁
+        # 1. 去主頁
         target_url = "https://www.smartplay.lcsd.gov.hk/facilities/search"
         print(f"正在前往: {target_url}")
         page.goto(target_url, wait_until="networkidle", timeout=60000)
         page.wait_for_timeout(5000)
         
-        # 2. 嘗試透過網址直接帶參數重載，或者直接讓頁面跳轉去帶有參數的網址
-        # 因為 SmartPLAY 支援 URL 參數，我們直接去帶參數的網址
-        search_with_params = "https://www.smartplay.lcsd.gov.hk/facilities/search?distCode=ST&faCode=BADC"
-        print(f"帶參數重新載入: {search_with_params}")
-        page.goto(search_with_params, wait_until="networkidle", timeout=60000)
+        # 2. 嘗試點擊「地區」下拉選單（SmartPLAY 通常用 select 或 custom dropdown）
+        try:
+            # 嘗試尋找並點擊地區選擇框
+            page.click("text=地區", timeout=3000)
+            page.wait_for_timeout(1000)
+            # 嘗試點擊沙田
+            page.click("text=沙田", timeout=3000)
+            print("已成功在畫面選取沙田區！")
+        except Exception as e:
+            print(f"畫面點擊選單失敗，嘗試用 JS 直接觸發事件: {e}")
+            
+        # 給予時間讓頁面反應
+        page.wait_for_timeout(8000)
         
-        # 3. 給予充足時間讓它自動加載 API
-        page.wait_for_timeout(10000)
-        
-        # 4. 寫入檔案
-        output_content = captured_data if captured_data else {"status": "still_no_data"}
+        # 3. 寫入檔案
+        output_content = captured_data if captured_data else {"status": "click_failed_no_data"}
         
         with open("data/today_ST.json", "w", encoding="utf-8") as f:
             json.dump(output_content, f, ensure_ascii=False, indent=2)
