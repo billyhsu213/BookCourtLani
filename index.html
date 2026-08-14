@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Book場啦你</title>
+    <title>Book場啦你[cite: 1]</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@
     <style>
         body { font-family: sans-serif; font-size: 13px; margin: 0; padding: 0; background: #fff; height: 100vh; display: flex; flex-direction: column; }
 
-        /* 1. 固定紅圈範圍（導航 + 篩選 + 表頭） */
+        /* 1. 固定紅圈範圍（頂部導航、日期、篩選、表頭） */
         .sticky-header-container {
             position: sticky;
             top: 0;
@@ -29,11 +29,12 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* 還原原本靚靚嘅更新同日期掣排版 */
         .top-bar { display: flex; gap: 3px; padding: 3px; align-items: center; }
-        .date-bar { display: flex; gap: 3px; overflow-x: auto; }
+        .date-bar { display: flex; gap: 3px; overflow-x: auto; flex: 1; }
         .date-btn { padding: 3px 6px; background: #007aff; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: bold; }
         .date-btn.active { background: #ff3b30; }
-        .refresh-btn { padding: 3px 6px; background: #34c759; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .refresh-btn { padding: 3px 6px; background: #34c759; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 13px; }
         .batch-bar { padding: 2px 4px; background: #f0f0f5; }
 
         /* 表格設定 */
@@ -42,6 +43,7 @@
         thead th { background: #e5e5ea; font-size: 11px; }
         
         .venue-col { text-align: left; padding-left: 2px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; font-size: 12px; width: 28%; }
+        .venue-col label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
         .has-court { background: #34c759; color: white; font-weight: bold; font-size: 14px; }
     </style>
 </head>
@@ -79,38 +81,80 @@
             try {
                 const res = await fetch('data.json?t=' + new Date().getTime());
                 rawData = await res.json();
-                rawData.forEach(item => { if(item.Venue_Name_TC) { const name = item.Venue_Name_TC.trim(); if(!venueMap.has(name)) venueMap.set(name, item.District_Name_TC); } });
-                sortedNames = Array.from(venueMap.keys()).sort((a, b) => { const distA = venueMap.get(a), distB = venueMap.get(b); return distA.localeCompare(distB) || a.localeCompare(b); });
+                
+                rawData.forEach(item => {
+                    if(item.Venue_Name_TC) {
+                        const name = item.Venue_Name_TC.trim();
+                        if(!venueMap.has(name)) venueMap.set(name, item.District_Name_TC);
+                    }
+                });
+
+                // 還原：沙田區排頭，離島區排尾，其他按區名排序
+                sortedNames = Array.from(venueMap.keys()).sort((a, b) => {
+                    const distA = venueMap.get(a), distB = venueMap.get(b);
+                    if (distA === '沙田區' && distB !== '沙田區') return -1;
+                    if (distB === '沙田區' && distA !== '沙田區') return 1;
+                    if (distA === '離島區' && distB !== '離島區') return 1;
+                    if (distB === '離島區' && distA !== '離島區') return -1;
+                    return distA.localeCompare(distB) || a.localeCompare(b);
+                });
+
                 const dates = Array.from(new Set(rawData.map(i => i.Available_Date))).sort();
                 if (dates.length > 0) currentDate = dates[0];
+                
                 const dateBar = document.getElementById('dateBar');
-                dates.forEach(d => { dateBar.innerHTML += `<button class="date-btn ${d===currentDate?'active':''}" onclick="changeDate('${d}')">${d.slice(5)}</button>`; });
+                dateBar.innerHTML = '';
+                dates.forEach(d => {
+                    dateBar.innerHTML += `<button class="date-btn ${d===currentDate?'active':''}" onclick="changeDate('${d}')">${d.slice(5)}</button>`;
+                });
                 
                 // 建立表頭
                 const headerRow = document.getElementById('headerRow');
-                for (let i = 7; i <= 22; i++) { let th = document.createElement('th'); th.innerText = i; headerRow.appendChild(th); }
+                for (let i = 7; i <= 22; i++) {
+                    let th = document.createElement('th');
+                    th.innerText = i;
+                    headerRow.appendChild(th);
+                }
+                
                 renderRows();
-            } catch (err) { alert("載入數據失敗：" + err.message); }
+            } catch (err) {
+                alert("載入數據失敗：" + err.message);
+            }
         }
 
         function renderRows() {
             const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
             sortedNames.forEach(name => {
                 const displayName = nameMap[name] || name;
                 let tr = document.createElement('tr');
                 tr.setAttribute('data-venue', name);
-                tr.innerHTML = `<td class="venue-col"><label><input type="checkbox" name="vCb" value="${name}" checked onchange="filterRows()"> ${displayName}</label></td>`;
-                for(let i=7; i<=22; i++) { tr.innerHTML += `<td class="court-cell" data-hour="${i.toString().padStart(2, '0')}:00"></td>`; }
+                tr.innerHTML = `<td class="venue-col">
+                    <label>
+                        <input type="checkbox" name="vCb" value="${name}" checked onchange="filterRows()"> 
+                        ${displayName}
+                    </label>
+                </td>`;
+                for(let i=7; i<=22; i++) {
+                    tr.innerHTML += `<td class="court-cell" data-hour="${i.toString().padStart(2, '0')}:00"></td>`;
+                }
                 tbody.appendChild(tr);
             });
             updateTableData();
         }
 
         function updateTableData() {
-            document.querySelectorAll('#tableBody tr').forEach(row => {
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(row => {
                 const name = row.getAttribute('data-venue');
-                row.querySelectorAll('.court-cell').forEach(cell => {
-                    const rec = rawData.find(r => r.Available_Date === currentDate && r.Venue_Name_TC.trim() === name && r.Session_Start_Time === cell.getAttribute('data-hour'));
+                const cells = row.querySelectorAll('.court-cell');
+                cells.forEach(cell => {
+                    const t = cell.getAttribute('data-hour');
+                    const rec = rawData.find(r => 
+                        r.Available_Date === currentDate && 
+                        r.Venue_Name_TC.trim() === name && 
+                        r.Session_Start_Time === t
+                    );
                     const count = rec ? parseInt(rec.Available_Courts) || 0 : 0;
                     cell.innerText = count > 0 ? count : '';
                     cell.className = count > 0 ? 'court-cell has-court' : 'court-cell';
@@ -118,10 +162,31 @@
             });
         }
 
-        function changeDate(d) { currentDate = d; document.querySelectorAll('.date-btn').forEach(btn => btn.className = btn.innerText === d.slice(5) ? 'date-btn active' : 'date-btn'); updateTableData(); }
-        function filterRows() { document.querySelectorAll('input[name="vCb"]').forEach(cb => cb.closest('tr').style.display = cb.checked ? '' : 'none'); }
-        function toggleAll(status) { document.querySelectorAll('input[name="vCb"]').forEach(cb => cb.checked = status); filterRows(); }
-        function refreshData() { location.reload(true); }
+        function changeDate(d) {
+            currentDate = d;
+            document.querySelectorAll('.date-btn').forEach(btn => {
+                btn.className = btn.innerText === d.slice(5) ? 'date-btn active' : 'date-btn';
+            });
+            updateTableData();
+        }
+
+        function filterRows() {
+            const checkboxes = document.querySelectorAll('input[name="vCb"]');
+            checkboxes.forEach(cb => {
+                const row = cb.closest('tr');
+                row.style.display = cb.checked ? '' : 'none';
+            });
+        }
+
+        function toggleAll(status) {
+            document.querySelectorAll('input[name="vCb"]').forEach(cb => cb.checked = status);
+            filterRows();
+        }
+
+        function refreshData() {
+            location.reload(true);
+        }
+
         init();
     </script>
 </body>
