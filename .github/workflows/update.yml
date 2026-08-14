@@ -3,7 +3,7 @@ name: Auto Update Badminton Data
 on:
   schedule:
     # 呢度設定為每小時自動執行一次（你可以按需要改頻率）
-    - cron: '/5 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch: # 容許你隨時手動喺 GitHub 按掣即時更新
 
 jobs:
