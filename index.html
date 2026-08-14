@@ -1,351 +1,127 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
-    <!-- 呢個係你想固定嘅紅圈範圍（頂部導航、按鈕、日期、表頭） -->
-<div class="sticky-header-container">
-    <!-- 頂部日期、更新掣等 -->
-    <div class="top-nav">...</div>
-    
-    <!-- 場館篩選掣 (全選/全不選) -->
-    <div class="filter-bar">...</div>
-
-    <!-- 表格開頭（包括 場館 同 7-22 數字） -->
-    <table class="badminton-table">
-        <thead>
-            <tr>
-                <th>場館</th>
-                <th>7</th><th>8</th><th>9</th><!-- ... 如此類推直到 22 --></tr>
-            </tr>
-        </thead>
-    </table>
-</div>
-
-<!-- 呢個係下面識得碌動嘅場館內容區域 -->
-<div class="table-scroll-body">
-    <table class="badminton-table">
-        <tbody>
-            <!-- 呢度放你所有場館嘅 <tr> 內容 -->
-        </tbody>
-    </table>
-</div>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Book場啦你</title>
     
-    <!-- PWA 專用設定 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Book場啦你">
     <meta name="theme-color" content="#007aff">
 
     <style>
-        /* 固定整個表格嘅頂部標題列（包括場館同 7-22 時間欄） */
-/* 1. 將紅圈範圍嘅最外層容器固定喺頂部 */
-.sticky-header-container {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: #ffffff; /* 必須有背景色，否則向下碌時下面嘅字會透上嚟 */
-}
+        body { font-family: sans-serif; font-size: 13px; margin: 0; padding: 0; background: #fff; height: 100vh; display: flex; flex-direction: column; }
 
-/* 2. 固定表格嘅表頭（場館同 7-22 嗰行）黏住個 container 底 */
-thead th {
-    position: sticky;
-    top: /* 根據你上面有幾多行工具列嘅高度去調整，例如 80px 或者跟隨 container */;
-    z-index: 90;
-    background-color: #ffffff;
-}
+        /* 1. 固定紅圈範圍（導航 + 篩選 + 表頭） */
+        .sticky-header-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #fff;
+            border-bottom: 2px solid #ccc;
+        }
 
-/* 3. 下面識得上下滾動嘅區域（高度可自行調節，例如 70vh） */
-.table-scroll-body {
-    max-height: 70vh; 
-    overflow-y: auto;
-    position: relative;
-}
-        /* 極致壓縮邊距與行高，確保一版睇晒 */
-        body { font-family: sans-serif; font-size: 13px; margin: 0; padding: 1px; background: #fff; }
-        
-        .top-bar { display: flex; gap: 3px; margin-bottom: 2px; align-items: center; }
+        /* 2. 下面內容區設定高度同滾動 */
+        .table-scroll-body {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .top-bar { display: flex; gap: 3px; padding: 3px; align-items: center; }
         .date-bar { display: flex; gap: 3px; overflow-x: auto; }
-        
         .date-btn { padding: 3px 6px; background: #007aff; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: bold; }
         .date-btn.active { background: #ff3b30; }
-        
-        .refresh-btn { padding: 3px 6px; background: #34c759; color: white; border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 13px; }
-        
-        .batch-bar { margin-bottom: 2px; background: #f0f0f5; padding: 2px 4px; border: 1px solid #ccc; display: inline-block; border-radius: 3px; }
-        .batch-bar button { font-size: 12px; padding: 1px 4px; cursor: pointer; font-weight: bold; }
-        
-        /* 移除外層 container 的 overflow-x 強制逼入一頁 */
-        .table-container { width: 100%; overflow: hidden; }
-        
-        /* 強制表格平分空間，縮小每小時欄寬 */
+        .refresh-btn { padding: 3px 6px; background: #34c759; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .batch-bar { padding: 2px 4px; background: #f0f0f5; }
+
+        /* 表格設定 */
         table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-        th, td { border: 1px solid #ccc; padding: 1px 0px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        th, td { border: 1px solid #ccc; padding: 2px 0; text-align: center; }
+        thead th { background: #e5e5ea; font-size: 11px; }
         
-        /* 時段欄位 (7-22 共16欄) 自動均分剩餘空間，極度縮窄 */
-        th { background: #e5e5ea; position: sticky; top: 0; z-index: 2; font-size: 11px; }
-        
-        /* 場館名稱欄位佔適當比例 */
         .venue-col { text-align: left; padding-left: 2px; position: sticky; left: 0; background: #f9f9f9; z-index: 1; font-size: 12px; width: 28%; }
-        .venue-col label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-        
-        /* 可訂場數：數字加粗加大 */
         .has-court { background: #34c759; color: white; font-weight: bold; font-size: 14px; }
-        
-        .court-cell { font-size: 12px; }
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <button class="refresh-btn" onclick="refreshData()">🔄 更新</button>
-        <div class="date-bar" id="dateBar"></div>
+
+    <div class="sticky-header-container">
+        <div class="top-bar">
+            <button class="refresh-btn" onclick="refreshData()">🔄 更新</button>
+            <div class="date-bar" id="dateBar"></div>
+        </div>
+        <div class="batch-bar">
+            場館篩選：<button onclick="toggleAll(true)">全選</button>
+            <button onclick="toggleAll(false)">全不選</button>
+        </div>
+        <table id="matrixTable">
+            <thead>
+                <tr id="headerRow">
+                    <th class="venue-col">場館</th>
+                </tr>
+            </thead>
+        </table>
     </div>
 
-    <div class="batch-bar">
-        場館篩選：
-        <button onclick="toggleAll(true)">全選</button>
-        <button onclick="toggleAll(false)">全不選</button>
-    </div>
-
-    <div class="table-container">
-        <table id="matrixTable"></table>
+    <div class="table-scroll-body">
+        <table id="dataContentTable">
+            <tbody id="tableBody"></tbody>
+        </table>
     </div>
 
     <script>
         let rawData = [], currentDate = '', sortedNames = [], venueMap = new Map();
-
-        // 場館名稱簡化及無冷氣（熱狗）對照表
-        const nameMap = {
-            "車公廟體育館": "車公廟",
-            "恆安體育館 (主場非備空調)": "恆安🥵",
-            "美林體育館": "美林",
-            "馬鞍山體育館": "馬鞍山",
-            "圓洲角體育館": "圓洲角",
-            "源禾路體育館": "源禾路",
-            "顯徑體育館": "顯徑🥵",
-            "九龍城體育館": "九龍城",
-            "土瓜灣體育館": "土瓜灣",
-            "佛光街體育館": "佛光街🥵",
-            "紅磡市政大廈體育館": "紅磡市政",
-            "大埔墟體育館": "大埔墟",
-            "大埔體育館": "大埔",
-            "太和體育館": "太和",
-            "東昌街體育館": "東昌街",
-            "富亨體育館": "富亨",
-            "富善體育館": "富善🥵",
-            "上環體育館": "上環",
-            "士美非路體育館": "士美非路",
-            "中山紀念公園體育館": "中山",
-            "石塘咀體育館": "石塘咀",
-            "香港公園體育館": "香港公園",
-            "元朗體育館": "元朗",
-            "天水圍體育館": "天水圍",
-            "天暉路體育館": "天暉路",
-            "天瑞體育館": "天瑞",
-            "屏山天水圍體育館": "屏山天水圍",
-            "朗屏體育館": "朗屏🥵",
-            "鳳琴街體育館": "鳳琴街",
-            "大興體育館": "大興",
-            "友愛體育館": "友愛",
-            "兆麟體育館": "兆麟",
-            "良田體育館": "良田",
-            "賽馬會屯門蝴蝶灣體育館": "蝴蝶灣",
-            "天平體育館（非空氣調節）": "天平🥵",
-            "和興體育館": "和興",
-            "保榮路體育館": "保榮路",
-            "龍琛路體育館": "龍琛路",
-            "坑口體育館": "坑口",
-            "香港單車館": "香港單車館",
-            "將軍澳體育館": "將軍澳",
-            "翠林體育館": "翠林",
-            "調景嶺體育館": "調景嶺",
-            "寶林體育館": "寶林🥵",
-            "小西灣體育館": "小西灣",
-            "西灣河體育館": "西灣河",
-            "柴灣體育館": "柴灣",
-            "渣華道體育館": "渣華道",
-            "港島東體育館": "港島東",
-            "鰂魚涌體育館": "鰂魚涌",
-            "九龍公園體育館": "九龍公園",
-            "大角咀體育館": "大角咀",
-            "官涌體育館": "官涌",
-            "花園街體育館": "花園街",
-            "界限街體育館": "界限街",
-            "赤柱體育館": "赤柱",
-            "香港仔體育館": "香港仔",
-            "黃竹坑體育館": "黃竹坑",
-            "漁光道體育館": "漁光道",
-            "鴨脷洲體育館": "鴨脷洲",
-            "荃景圍體育館": "荃景圍",
-            "荃灣西約體育館 (毗鄰麗城花園)": "荃灣西約",
-            "荃灣體育館 (毗鄰荃灣西站)": "荃灣",
-            "楊屋道體育館": "楊屋道",
-            "蕙荃體育館": "蕙荃",
-            "北河街體育館": "北河街",
-            "石硤尾公園體育館": "石峽尾公園",
-            "長沙灣體育館": "長沙灣",
-            "保安道體育館": "保安道",
-            "荔枝角公園體育館": "荔枝角公園",
-            "深水埗體育館": "深水埗",
-            "牛池灣體育館": "牛池灣",
-            "竹園體育館": "竹園",
-            "東啟德體育館": "東啟德",
-            "馬仔坑體育館": "馬仔坑",
-            "彩虹道羽毛球中心": "彩虹中心",
-            "彩虹道體育館": "彩虹道",
-            "蒲崗村道體育館": "蒲崗村道",
-            "摩士公園體育館": "摩士公園",
-            "大窩口體育館": "大窩口",
-            "北葵涌鄧肇堅體育館": "北葵涌",
-            "林士德體育館": "林士德",
-            "長發體育館": "長發",
-            "青衣西南體育館": "青衣西南",
-            "青衣體育館": "青衣",
-            "荔景體育館": "荔景",
-            "楓樹窩體育館": "楓樹窩",
-            "伊利沙伯體育館": "伊利沙伯",
-            "港灣道體育館": "港灣道",
-            "黃泥涌體育館": "黃泥涌",
-            "駱克道體育館": "駱克道",
-            "九龍灣體育館": "九龍灣",
-            "牛頭角道體育館": "牛頭角道",
-            "振華道體育館": "振華道",
-            "彩榮路體育館": "彩榮路",
-            "順利邨體育館": "順利邨",
-            "瑞和街體育館": "瑞和街",
-            "曉光街體育館": "曉光街",
-            "藍田南體育館": "藍田南",
-            "鯉魚門體育館": "鯉魚門",
-            "坪洲體育館": "坪洲",
-            "東涌文東路體育館": "東涌文東路",
-            "長洲體育館 (毗鄰長洲醫院）": "長洲",
-            "海傍街體育館 (長洲市政大廈內)": "海傍街",
-            "梅窩體育館": "梅窩"
-        };
+        const nameMap = {"車公廟體育館": "車公廟","恆安體育館 (主場非備空調)": "恆安🥵","美林體育館": "美林","馬鞍山體育館": "馬鞍山","圓洲角體育館": "圓洲角","源禾路體育館": "源禾路","顯徑體育館": "顯徑🥵","九龍城體育館": "九龍城","土瓜灣體育館": "土瓜灣","佛光街體育館": "佛光街🥵","紅磡市政大廈體育館": "紅磡市政","大埔墟體育館": "大埔墟","大埔體育館": "大埔","太和體育館": "太和","東昌街體育館": "東昌街","富亨體育館": "富亨","富善體育館": "富善🥵","上環體育館": "上環","士美非路體育館": "士美非路","中山紀念公園體育館": "中山","石塘咀體育館": "石塘咀","香港公園體育館": "香港公園","元朗體育館": "元朗","天水圍體育館": "天水圍","天暉路體育館": "天暉路","天瑞體育館": "天瑞","屏山天水圍體育館": "屏山天水圍","朗屏體育館": "朗屏🥵","鳳琴街體育館": "鳳琴街","大興體育館": "大興","友愛體育館": "友愛","兆麟體育館": "兆麟","良田體育館": "良田","賽馬會屯門蝴蝶灣體育館": "蝴蝶灣","天平體育館（非空氣調節）": "天平🥵","和興體育館": "和興","保榮路體育館": "保榮路","龍琛路體育館": "龍琛路","坑口體育館": "坑口","香港單車館": "香港單車館","將軍澳體育館": "將軍澳","翠林體育館": "翠林","調景嶺體育館": "調景嶺","寶林體育館": "寶林🥵","小西灣體育館": "小西灣","西灣河體育館": "西灣河","柴灣體育館": "柴灣","渣華道體育館": "渣華道","港島東體育館": "港島東","鰂魚涌體育館": "鰂魚涌","九龍公園體育館": "九龍公園","大角咀體育館": "大角咀","官涌體育館": "官涌","花園街體育館": "花園街","界限街體育館": "界限街","赤柱體育館": "赤柱","香港仔體育館": "香港仔","黃竹坑體育館": "黃竹坑","漁光道體育館": "漁光道","鴨脷洲體育館": "鴨脷洲","荃景圍體育館": "荃景圍","荃灣西約體育館 (毗鄰麗城花園)": "荃灣西約","荃灣體育館 (毗鄰荃灣西站)": "荃灣","楊屋道體育館": "楊屋道","蕙荃體育館": "蕙荃","北河街體育館": "北河街","石硤尾公園體育館": "石峽尾公園","長沙灣體育館": "長沙灣","保安道體育館": "保安道","荔枝角公園體育館": "荔枝角公園","深水埗體育館": "深水埗","牛池灣體育館": "牛池灣","竹園體育館": "竹園","東啟德體育館": "東啟德","馬仔坑體育館": "馬仔坑","彩虹道羽毛球中心": "彩虹中心","彩虹道體育館": "彩虹道","蒲崗村道體育館": "蒲崗村道","摩士公園體育館": "摩士公園","大窩口體育館": "大窩口","北葵涌鄧肇堅體育館": "北葵涌","林士德體育館": "林士德","長發體育館": "長發","青衣西南體育館": "青衣西南","青衣體育館": "青衣","荔景體育館": "荔景","楓樹窩體育館": "楓樹窩","伊利沙伯體育館": "伊利沙伯","港灣道體育館": "港灣道","黃泥涌體育館": "黃泥涌","駱克道體育館": "駱克道","九龍灣體育館": "九龍灣","牛頭角道體育館": "牛頭角道","振華道體育館": "振華道","彩榮路體育館": "彩榮路","順利邨體育館": "順利邨","瑞和街體育館": "瑞和街","曉光街體育館": "曉光街","藍田南體育館": "藍田南","鯉魚門體育館": "鯉魚門","坪洲體育館": "坪洲","東涌文東路體育館": "東涌文東路","長洲體育館 (毗鄰長洲醫院）": "長洲","海傍街體育館 (長洲市政大廈內)": "海傍街","梅窩體育館": "梅窩"};
 
         async function init() {
             try {
-                // 加入時間戳，阻止瀏覽器 cache
                 const res = await fetch('data.json?t=' + new Date().getTime());
                 rawData = await res.json();
-                
-                rawData.forEach(item => {
-                    if(item.Venue_Name_TC) {
-                        const name = item.Venue_Name_TC.trim();
-                        if(!venueMap.has(name)) venueMap.set(name, item.District_Name_TC);
-                    }
-                });
-
-                sortedNames = Array.from(venueMap.keys()).sort((a, b) => {
-                    const distA = venueMap.get(a), distB = venueMap.get(b);
-                    if (distA === '沙田區' && distB !== '沙田區') return -1;
-                    if (distB === '沙田區' && distA !== '沙田區') return 1;
-                    if (distA === '離島區' && distB !== '離島區') return 1;
-                    if (distB === '離島區' && distA !== '離島區') return -1;
-                    return distA.localeCompare(distB) || a.localeCompare(b);
-                });
-
+                rawData.forEach(item => { if(item.Venue_Name_TC) { const name = item.Venue_Name_TC.trim(); if(!venueMap.has(name)) venueMap.set(name, item.District_Name_TC); } });
+                sortedNames = Array.from(venueMap.keys()).sort((a, b) => { const distA = venueMap.get(a), distB = venueMap.get(b); return distA.localeCompare(distB) || a.localeCompare(b); });
                 const dates = Array.from(new Set(rawData.map(i => i.Available_Date))).sort();
                 if (dates.length > 0) currentDate = dates[0];
-                
                 const dateBar = document.getElementById('dateBar');
-                dateBar.innerHTML = '';
-                dates.forEach(d => {
-                    dateBar.innerHTML += `<button class="date-btn ${d===currentDate?'active':''}" onclick="changeDate('${d}')">${d.slice(5)}</button>`;
-                });
+                dates.forEach(d => { dateBar.innerHTML += `<button class="date-btn ${d===currentDate?'active':''}" onclick="changeDate('${d}')">${d.slice(5)}</button>`; });
                 
-                buildTableStructure();
-            } catch (err) {
-                alert("載入數據失敗：" + err.message);
-            }
+                // 建立表頭
+                const headerRow = document.getElementById('headerRow');
+                for (let i = 7; i <= 22; i++) { let th = document.createElement('th'); th.innerText = i; headerRow.appendChild(th); }
+                renderRows();
+            } catch (err) { alert("載入數據失敗：" + err.message); }
         }
 
-        function buildTableStructure() {
-            const table = document.getElementById('matrixTable');
-            let html = `<thead><tr><th class="venue-col" style="z-index: 3; background: #e5e5ea;">場館</th>`;
-            for (let i = 7; i <= 22; i++) {
-                html += `<th>${i}</th>`;
-            }
-            html += `</tr></thead><tbody id="tableBody">`;
-            
+        function renderRows() {
+            const tbody = document.getElementById('tableBody');
             sortedNames.forEach(name => {
-             const displayName = nameMap[name] || name; // 自動轉換成你嘅短名（如果對唔到就照用原名）
-                html += `<tr data-venue="${name}">
-                    <td class="venue-col">
-                        <label>
-                            <input type="checkbox" name="vCb" value="${name}" checked onchange="filterRows()"> 
-                            ${displayName}
-                        </label>
-                    </td>`;
-                
-                for(let i=7; i<=22; i++) {
-                    html += `<td class="court-cell" data-hour="${i.toString().padStart(2, '0')}:00"></td>`;
-                }
-                html += `</tr>`;
+                const displayName = nameMap[name] || name;
+                let tr = document.createElement('tr');
+                tr.setAttribute('data-venue', name);
+                tr.innerHTML = `<td class="venue-col"><label><input type="checkbox" name="vCb" value="${name}" checked onchange="filterRows()"> ${displayName}</label></td>`;
+                for(let i=7; i<=22; i++) { tr.innerHTML += `<td class="court-cell" data-hour="${i.toString().padStart(2, '0')}:00"></td>`; }
+                tbody.appendChild(tr);
             });
-            
-            table.innerHTML = html + `</tbody>`;
             updateTableData();
         }
 
         function updateTableData() {
-            const rows = document.querySelectorAll('#tableBody tr');
-            rows.forEach(row => {
+            document.querySelectorAll('#tableBody tr').forEach(row => {
                 const name = row.getAttribute('data-venue');
-                const cells = row.querySelectorAll('.court-cell');
-                cells.forEach(cell => {
-                    const t = cell.getAttribute('data-hour');
-                    
-                    // 嚴格匹配日期、場館名稱及時段
-                    const rec = rawData.find(r => 
-                        r.Available_Date === currentDate && 
-                        r.Venue_Name_TC.trim() === name && 
-                        r.Session_Start_Time === t
-                    );
-                    
-                    // 確保安全轉換數字，非數字或小於等於0一律視為0
+                row.querySelectorAll('.court-cell').forEach(cell => {
+                    const rec = rawData.find(r => r.Available_Date === currentDate && r.Venue_Name_TC.trim() === name && r.Session_Start_Time === cell.getAttribute('data-hour'));
                     const count = rec ? parseInt(rec.Available_Courts) || 0 : 0;
-                    
-                    // 只有大於0至會顯示數字同綠色，否則完全空白
                     cell.innerText = count > 0 ? count : '';
                     cell.className = count > 0 ? 'court-cell has-court' : 'court-cell';
                 });
             });
         }
 
-        function changeDate(d) {
-            currentDate = d;
-            document.querySelectorAll('.date-btn').forEach(btn => {
-                btn.className = btn.innerText === d.slice(5) ? 'date-btn active' : 'date-btn';
-            });
-            updateTableData();
-        }
-
-        function filterRows() {
-            const checkboxes = document.querySelectorAll('input[name="vCb"]');
-            checkboxes.forEach(cb => {
-                const row = cb.closest('tr');
-                row.style.display = cb.checked ? '' : 'none';
-            });
-        }
-
-        function toggleAll(status) {
-            document.querySelectorAll('input[name="vCb"]').forEach(cb => cb.checked = status);
-            filterRows();
-        }
-
-        function refreshData() {
-            location.reload(true);
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed: ', err));
-            });
-        }
-
+        function changeDate(d) { currentDate = d; document.querySelectorAll('.date-btn').forEach(btn => btn.className = btn.innerText === d.slice(5) ? 'date-btn active' : 'date-btn'); updateTableData(); }
+        function filterRows() { document.querySelectorAll('input[name="vCb"]').forEach(cb => cb.closest('tr').style.display = cb.checked ? '' : 'none'); }
+        function toggleAll(status) { document.querySelectorAll('input[name="vCb"]').forEach(cb => cb.checked = status); filterRows(); }
+        function refreshData() { location.reload(true); }
         init();
     </script>
 </body>
