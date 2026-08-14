@@ -1,6 +1,5 @@
 {
-  "status": "urls_captured",
-  "urls": [
-    "no_api_called"
-  ]
+  "status": "text_extracted",
+  "content_preview": "",
+  "full_length": 0
 }
