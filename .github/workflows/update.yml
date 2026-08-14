@@ -2,7 +2,7 @@ name: Update SmartPLAY Data
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # 例如你原本設定嘅定時頻率
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -30,4 +30,4 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add data/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update SmartPLAY data" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update SmartPLAY data" && git pull --rebase && git push)
