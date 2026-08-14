@@ -1,68 +1,42 @@
-import datetime
+from playwright.sync_api import sync_playwright
 import json
 import os
-import time  # 1. 導入 time 模組
-import requests
+import time
 
-dist_codes = [
-    "CW",
-    "S",
-    "E",
-    "W",
-    "KC",
-    "KT",
-    "SSP",
-    "WTS",
-    "YTM",
-    "I",
-    "KWT",
-    "N",
-    "SK",
-    "ST",
-    "TP",
-    "TW",
-    "TM",
-    "YL",
-]
-fa_code = "BADC"
-
-today = datetime.date.today()
-dates = [(today + datetime.timedelta(days=i)).isoformat() for i in range(7)]
-
-headers = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
-        " like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json, text/plain, */*",
-    "Referer": "https://www.smartplay.lcsd.gov.hk/",  # 2. 扮得貼近真實瀏覽器
-}
-
-os.makedirs("data", exist_ok=True)
-
-for date in dates:
-  for dist in dist_codes:
-    url = f"https://www.smartplay.lcsd.gov.hk/rest/facility-catalog/api/v1/publ/facilities?distCode={dist}&faCode={fa_code}&playDate={date}"
-    try:
-      response = requests.get(url, headers=headers, timeout=10)
-      if response.status_code == 200:
+def fetch_data():
+    os.makedirs("data", exist_ok=True)
+    
+    # 這裡只示範沙田區 (ST) 作為測試
+    # 之後你可以再加其他地區代碼落去個 list 度
+    dist_code = "ST" 
+    
+    with sync_playwright() as p:
+        # 開啟一個隱形瀏覽器
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        
+        # 直接進入 SmartPLAY 查場頁面
+        url = "https://www.smartplay.lcsd.gov.hk/facilities/search"
+        page.goto(url, wait_until="networkidle")
+        
+        # 這裡會模擬真人操作：等個網頁載入完，抓取網頁內容
+        # 其實 SmartPLAY 的數據通常藏在網頁的 JSON 響應中
+        # 這裡我們監聽網頁發出的請求並攔截數據
+        
+        with page.expect_response("**/api/v1/publ/facilities?*") as response_info:
+            # 這裡可以觸發查詢，不過直接進入頁面通常會自動載入
+            time.sleep(5) # 等候一下讓內容載入
+            
+        response = response_info.value
         data = response.json()
-
-        # 檢查係咪真係拿到數據，定係回傳咗 error message
-        if isinstance(data, dict) and data.get("code") == "error":
-          print(f"Rate limited or error: Date {date}, District {dist}")
-        else:
-          file_path = f"data/{date}_{dist}.json"
-          with open(file_path, "w", encoding="utf-8") as f:
+        
+        # 儲存檔案
+        file_path = f"data/today_{dist_code}.json"
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
-          print(f"Successfully fetched & saved: Date {date}, District {dist}")
+            
+        browser.close()
+        print(f"Data saved to {file_path}")
 
-      else:
-        print(f"Failed (Status {response.status_code}): {date}, {dist}")
-
-      # 3. 每次請求後停 1 至 2 秒，避免過快被 block
-      time.sleep(1.5)
-
-    except Exception as e:
-      print(f"Error fetching Date {date}, District {dist}: {e}")
-      time.sleep(2)
+if __name__ == "__main__":
+    fetch_data()
